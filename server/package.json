@@ -1,0 +1,17 @@
+{
+  "name": "the-frame-server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "postinstall": "bunx playwright install chromium"
+  },
+  "dependencies": {
+    "lucide-static": "^1.8.0",
+    "playwright": "^1.52.0",
+    "sharp": "^0.34.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
