@@ -7,9 +7,9 @@
     "postinstall": "bunx playwright install chromium"
   },
   "dependencies": {
-    "lucide-static": "^1.8.0",
-    "playwright": "^1.52.0",
-    "sharp": "^0.34.1"
+    "lucide-static": "1.8.0",
+    "playwright": "1.52.0",
+    "sharp": "0.34.1"
   },
   "devDependencies": {
     "@types/bun": "latest"
