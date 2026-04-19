@@ -4,3 +4,4 @@
 /Cargo.lock
 /server/node_modules
 /server/bun.lockb
+.env

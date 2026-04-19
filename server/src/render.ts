@@ -1,5 +1,9 @@
 import {
   TramFront,
+  TrainFrontTunnel,
+  TrainFront,
+  Bus,
+  Ship,
   Cloud,
   CloudRain,
   CloudSnow,
@@ -10,9 +14,36 @@ import {
   Sun,
   Clock,
 } from "lucide-static";
+import type { StopDepartures, VehicleMode } from "./transit";
 
 export interface FrameData {
-  // TODO: Add transit and weather API data types
+  transit?: StopDepartures;
+  // TODO: Add weather API data type
+}
+
+function vehicleIcon(mode: VehicleMode): string {
+  switch (mode) {
+    case "SUBWAY":
+      return TrainFrontTunnel;
+    case "RAIL":
+      return TrainFront;
+    case "TRAM":
+      return TramFront;
+    case "FERRY":
+      return Ship;
+    case "BUS":
+    case "TROLLEYBUS":
+      return Bus;
+    default:
+      return TramFront;
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function icon(svg: string, size = 20): string {
@@ -33,7 +64,16 @@ export const weatherIcons = {
   cloudFog: CloudFog,
 } as const;
 
-export function renderHtml(_data: FrameData): string {
+export function renderHtml(data: FrameData): string {
+  const transitRows = data.transit
+    ? data.transit.departures
+        .map((d) => {
+          const iconSvg = vehicleIcon(data.transit!.vehicleMode);
+          return `<div class="transit-row"><span class="label">${icon(iconSvg)} ${escapeHtml(d.headsign)}</span><span>${d.time}</span></div>`;
+        })
+        .join("\n      ")
+    : `<div class="transit-row"><span class="label">No departures</span></div>`;
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -45,7 +85,7 @@ export function renderHtml(_data: FrameData): string {
     height: 480px;
     background: white;
     color: black;
-    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-family: "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
     -webkit-font-smoothing: none;
   }
@@ -138,15 +178,7 @@ export function renderHtml(_data: FrameData): string {
 <body>
   <div class="container">
     <div class="left">
-      <!-- TODO: Replace with real transit data -->
-      <div class="transit-row"><span class="label">${icon(TramFront)} Kivenlahti (M)</span><span>22:05</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Vuosaari (M)</span><span>22:10</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Kivenlahti (M)</span><span>22:15</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Vuosaari (M)</span><span>22:20</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Kivenlahti (M)</span><span>22:25</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Vuosaari (M)</span><span>22:30</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Kivenlahti (M)</span><span>22:35</span></div>
-      <div class="transit-row"><span class="label">${icon(TramFront)} Vuosaari (M)</span><span>22:40</span></div>
+      ${transitRows}
     </div>
     <div class="right">
       <div class="weather-current">

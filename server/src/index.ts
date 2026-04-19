@@ -1,6 +1,7 @@
 import { renderHtml } from "./render";
 import { initBrowser, screenshotHtml, closeBrowser } from "./screenshot";
 import { convertToBmp } from "./convert";
+import { fetchDepartures } from "./transit";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -13,7 +14,8 @@ const server = Bun.serve({
     const url = new URL(req.url);
 
     if (url.pathname === "/frame") {
-      const html = renderHtml({});
+      const transit = await fetchDepartures();
+      const html = renderHtml({ transit });
 
       if (url.searchParams.get("html") === "true") {
         return new Response(html, {
