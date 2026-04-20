@@ -2,6 +2,7 @@ import { renderHtml } from "./render";
 import { initBrowser, screenshotHtml, closeBrowser } from "./screenshot";
 import { convertToBmp } from "./convert";
 import { fetchDepartures } from "./transit";
+import { fetchWeather } from "./weather";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -14,8 +15,11 @@ const server = Bun.serve({
     const url = new URL(req.url);
 
     if (url.pathname === "/frame") {
-      const transit = await fetchDepartures();
-      const html = renderHtml({ transit });
+      const [transit, weather] = await Promise.all([
+        fetchDepartures(),
+        fetchWeather(),
+      ]);
+      const html = renderHtml({ transit, weather });
 
       if (url.searchParams.get("html") === "true") {
         return new Response(html, {

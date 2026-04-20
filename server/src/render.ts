@@ -3,7 +3,6 @@ import {
   TrainFrontTunnel,
   TrainFront,
   Bus,
-  Ship,
   Cloud,
   CloudRain,
   CloudSnow,
@@ -15,10 +14,11 @@ import {
   Clock,
 } from "lucide-static";
 import type { StopDepartures, VehicleMode } from "./transit";
+import type { Weather, WeatherIconKey } from "./weather";
 
 export interface FrameData {
   transit?: StopDepartures;
-  // TODO: Add weather API data type
+  weather?: Weather;
 }
 
 function vehicleIcon(mode: VehicleMode): string {
@@ -29,13 +29,8 @@ function vehicleIcon(mode: VehicleMode): string {
       return TrainFront;
     case "TRAM":
       return TramFront;
-    case "FERRY":
-      return Ship;
     case "BUS":
-    case "TROLLEYBUS":
       return Bus;
-    default:
-      return TramFront;
   }
 }
 
@@ -53,7 +48,7 @@ function icon(svg: string, size = 20): string {
     .replace(/stroke-width="\d+"/, `stroke-width="2.5"`);
 }
 
-export const weatherIcons = {
+const weatherIcons: Record<WeatherIconKey, string> = {
   sun: Sun,
   cloud: Cloud,
   cloudSun: CloudSun,
@@ -62,7 +57,7 @@ export const weatherIcons = {
   cloudSnow: CloudSnow,
   cloudLightning: CloudLightning,
   cloudFog: CloudFog,
-} as const;
+};
 
 export function renderHtml(data: FrameData): string {
   const transitRows = data.transit
@@ -73,6 +68,27 @@ export function renderHtml(data: FrameData): string {
         })
         .join("\n      ")
     : `<div class="transit-row"><span class="label">No departures</span></div>`;
+
+  const weatherCurrent = data.weather
+    ? `${icon(weatherIcons[data.weather.current.iconKey], 48)}
+        <div class="weather-temp">${data.weather.current.temp}°</div>
+        <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>`
+    : `<div class="weather-desc">No weather data</div>`;
+
+  const forecastItems = data.weather
+    ? data.weather.forecast
+        .map(
+          (f) => `<div class="forecast-item">
+          <div class="forecast-time">${f.hour}</div>
+          <div class="forecast-icon">${icon(weatherIcons[f.iconKey], 28)}</div>
+          <div class="forecast-temp">${f.temp}°</div>
+        </div>`,
+        )
+        .join("\n        ")
+    : "";
+
+  const updated = new Date();
+  const updatedTime = `${String(updated.getHours()).padStart(2, "0")}:${String(updated.getMinutes()).padStart(2, "0")}`;
 
   return `<!DOCTYPE html>
 <html>
@@ -182,34 +198,12 @@ export function renderHtml(data: FrameData): string {
     </div>
     <div class="right">
       <div class="weather-current">
-        <!-- TODO: Replace with real weather data -->
-        ${icon(CloudRain, 48)}
-        <div class="weather-temp">10°</div>
-        <div class="weather-desc">Rain</div>
+        ${weatherCurrent}
       </div>
       <div class="forecast">
-        <div class="forecast-item">
-          <div class="forecast-time">01</div>
-          <div class="forecast-icon">${icon(CloudRain, 28)}</div>
-          <div class="forecast-temp">10°</div>
-        </div>
-        <div class="forecast-item">
-          <div class="forecast-time">04</div>
-          <div class="forecast-icon">${icon(CloudDrizzle, 28)}</div>
-          <div class="forecast-temp">8°</div>
-        </div>
-        <div class="forecast-item">
-          <div class="forecast-time">07</div>
-          <div class="forecast-icon">${icon(Cloud, 28)}</div>
-          <div class="forecast-temp">7°</div>
-        </div>
-        <div class="forecast-item">
-          <div class="forecast-time">10</div>
-          <div class="forecast-icon">${icon(CloudSun, 28)}</div>
-          <div class="forecast-temp">8°</div>
-        </div>
+        ${forecastItems}
       </div>
-      <div class="updated">${icon(Clock, 12)} Updated 22:03</div>
+      <div class="updated">${icon(Clock, 12)} Updated ${updatedTime}</div>
     </div>
   </div>
 </body>
