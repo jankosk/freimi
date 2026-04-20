@@ -64,24 +64,31 @@ export function renderHtml(data: FrameData): string {
     ? data.transit.departures
         .map((d) => {
           const iconSvg = vehicleIcon(data.transit!.vehicleMode);
-          return `<div class="transit-row"><span class="label">${icon(iconSvg)} ${escapeHtml(d.headsign)}</span><span>${d.time}</span></div>`;
+          return `<div class="transit-row">
+            <span class="label">${icon(iconSvg)} ${escapeHtml(d.headsign)}</span>
+            <span class="time">${d.time}</span>
+          </div>`;
         })
         .join("\n      ")
     : `<div class="transit-row"><span class="label">No departures</span></div>`;
 
   const weatherCurrent = data.weather
-    ? `${icon(weatherIcons[data.weather.current.iconKey], 48)}
-        <div class="weather-temp">${data.weather.current.temp}°</div>
-        <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>`
+    ? `<div class="weather-icon">${icon(weatherIcons[data.weather.current.iconKey], 96)}</div>
+        <div class="weather-info">
+          <div class="weather-temp">${data.weather.current.temp}°</div>
+          <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>
+        </div>`
     : `<div class="weather-desc">No weather data</div>`;
 
   const forecastItems = data.weather
     ? data.weather.forecast
         .map(
           (f) => `<div class="forecast-item">
-          <div class="forecast-time">${f.hour}</div>
-          <div class="forecast-icon">${icon(weatherIcons[f.iconKey], 28)}</div>
-          <div class="forecast-temp">${f.temp}°</div>
+          <div class="forecast-icon">${icon(weatherIcons[f.iconKey], 44)}</div>
+          <div class="forecast-info">
+            <div class="forecast-time">${f.hour}</div>
+            <div class="forecast-temp">${f.temp}°</div>
+          </div>
         </div>`,
         )
         .join("\n        ")
@@ -99,11 +106,12 @@ export function renderHtml(data: FrameData): string {
   body {
     width: 800px;
     height: 480px;
+    padding: 16px 46px;
     background: white;
     color: black;
     font-family: "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
-    -webkit-font-smoothing: none;
+    font-weight: 500;
   }
   .container {
     display: flex;
@@ -117,6 +125,8 @@ export function renderHtml(data: FrameData): string {
   .right {
     flex: 1;
     padding: 24px;
+    display: flex;
+    flex-direction: column;
   }
   h1 {
     font-size: 32px;
@@ -141,18 +151,32 @@ export function renderHtml(data: FrameData): string {
     align-items: center;
     gap: 8px;
   }
+  .transit-row .time {
+    font-weight: 700;
+  }
   .weather-current {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
+    gap: 20px;
     margin-bottom: 24px;
   }
-  .weather-current > svg {
-    margin-bottom: 8px;
+  .weather-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .weather-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
   }
   .weather-temp {
     font-size: 64px;
     font-weight: 700;
+    line-height: 1;
   }
   .weather-desc {
     font-size: 18px;
@@ -165,25 +189,34 @@ export function renderHtml(data: FrameData): string {
   }
   .forecast-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
+    gap: 12px;
     padding: 8px;
     border: 1px solid black;
+  }
+  .forecast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .forecast-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
   }
   .forecast-time {
     font-size: 16px;
     font-weight: 700;
   }
-  .forecast-icon {
-    margin: 4px 0;
-  }
   .forecast-temp {
     font-size: 20px;
   }
   .updated {
-    position: absolute;
-    bottom: 12px;
-    right: 24px;
+    margin-top: auto;
+    align-self: flex-end;
     font-size: 12px;
     display: flex;
     align-items: center;

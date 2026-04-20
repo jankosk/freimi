@@ -30,7 +30,7 @@ const server = Bun.serve({
       const png = await screenshotHtml(html);
       const bmp = await convertToBmp(png);
 
-      return new Response(bmp, {
+      return new Response(new Uint8Array(bmp), {
         headers: { "Content-Type": "image/bmp" },
       });
     }
