@@ -16,9 +16,20 @@ use tinybmp::Bmp;
 const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
 const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
 const FRAME_URL: Option<&str> = option_env!("FRAME_URL");
+const SLEEP_MINUTES: u64 = 30;
 
-fn main() -> anyhow::Result<()> {
+fn main() -> ! {
     esp_idf_sys::link_patches();
+
+    if let Err(err) = run() {
+        eprintln!("run() failed: {err:?}");
+    }
+
+    println!("Deep sleeping for {} minute(s)...", SLEEP_MINUTES);
+    unsafe { esp_idf_sys::esp_deep_sleep(SLEEP_MINUTES * 60 * 1_000_000) }
+}
+
+fn run() -> anyhow::Result<()> {
     let wifi_ssid =
         WIFI_SSID.ok_or_else(|| anyhow::anyhow!("WIFI_SSID not set at compile time"))?;
     let wifi_password =
@@ -87,18 +98,13 @@ fn main() -> anyhow::Result<()> {
 
     // 5. Draw image
     println!("Drawing image...");
-
     let mut display = Display7in5::default();
     display.clear(Color::White).ok();
-
     let bmp = Bmp::<BinaryColor>::from_slice(&bmp_data).unwrap();
-
     Image::new(&bmp, Point::zero()).draw(&mut display.color_converted())?;
-
     epd.update_and_display_frame(&mut spi, display.buffer(), &mut delay)?;
-
     println!("Done!");
-    epd.sleep(&mut spi, &mut delay)?;
 
+    epd.sleep(&mut spi, &mut delay)?;
     Ok(())
 }
