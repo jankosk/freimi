@@ -1,5 +1,6 @@
 const API_URL = "https://api.openweathermap.org/data/2.5/forecast";
 const [LAT, LON] = ["60.16952", "24.93545"] // Helsinki
+const LANG = 'fi'
 const UNITS = "metric";
 
 export type WeatherIconKey =
@@ -80,7 +81,7 @@ export async function fetchWeather(): Promise<Weather> {
     throw new Error("OPENWEATHER_API_KEY is not set");
   }
 
-  const params = new URLSearchParams({ lat: LAT, lon: LON, units: UNITS, appid: key });
+  const params = new URLSearchParams({ lat: LAT, lon: LON, lang: LANG, units: UNITS, appid: key });
   const res = await fetch(`${API_URL}?${params}`);
 
   if (!res.ok) {
