@@ -1,16 +1,71 @@
 use embedded_graphics::{image::Image, pixelcolor::BinaryColor, prelude::*};
+use embedded_svc::http::client::Client;
 use epd_waveshare::{color::Color, epd7in5_v2::*, prelude::*};
 use esp_idf_hal::delay::FreeRtos;
 use esp_idf_hal::gpio::*;
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::spi::*;
+use esp_idf_svc::eventloop::EspSystemEventLoop;
+use esp_idf_svc::http::client::{Configuration as HttpConfiguration, EspHttpConnection};
+use esp_idf_svc::nvs::EspDefaultNvsPartition;
+use esp_idf_svc::wifi::{
+    AuthMethod, BlockingWifi, ClientConfiguration, Configuration as WifiConfiguration, EspWifi,
+};
 use tinybmp::Bmp;
+
+const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
+const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
+const FRAME_URL: Option<&str> = option_env!("FRAME_URL");
 
 fn main() -> anyhow::Result<()> {
     esp_idf_sys::link_patches();
-    let peripherals = Peripherals::take().unwrap();
+    let wifi_ssid =
+        WIFI_SSID.ok_or_else(|| anyhow::anyhow!("WIFI_SSID not set at compile time"))?;
+    let wifi_password =
+        WIFI_PASSWORD.ok_or_else(|| anyhow::anyhow!("WIFI_PASSWORD not set at compile time"))?;
+    let frame_url =
+        FRAME_URL.ok_or_else(|| anyhow::anyhow!("FRAME_URL not set at compile time"))?;
 
-    // 1. Setup SPI
+    let peripherals = Peripherals::take().unwrap();
+    let sysloop = EspSystemEventLoop::take()?;
+    let nvs = EspDefaultNvsPartition::take()?;
+
+    // 1. Connect to WiFi
+    let mut wifi = BlockingWifi::wrap(
+        EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
+        sysloop,
+    )?;
+    wifi.set_configuration(&WifiConfiguration::Client(ClientConfiguration {
+        ssid: wifi_ssid.try_into().unwrap(),
+        password: wifi_password.try_into().unwrap(),
+        auth_method: AuthMethod::WPA2Personal,
+        ..Default::default()
+    }))?;
+    wifi.start()?;
+    wifi.connect()?;
+    wifi.wait_netif_up()?;
+    println!("WiFi connected");
+
+    // 2. Fetch BMP over HTTP
+    println!("Fetching {}", frame_url);
+    let mut client = Client::wrap(EspHttpConnection::new(&HttpConfiguration {
+        buffer_size: Some(4096),
+        ..Default::default()
+    })?);
+    let mut response = client.get(frame_url)?.submit()?;
+
+    let mut bmp_data: Vec<u8> = Vec::with_capacity(64 * 1024);
+    let mut buf = [0u8; 1024];
+    loop {
+        let n = response.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        bmp_data.extend_from_slice(&buf[..n]);
+    }
+    println!("Fetched {} bytes", bmp_data.len());
+
+    // 3. Setup SPI
     let spi_config = config::Config::new().baudrate(4_000_000.into());
     let bus_config = config::DriverConfig::default();
     let mut spi = SpiDeviceDriver::new_single(
@@ -23,21 +78,20 @@ fn main() -> anyhow::Result<()> {
         &spi_config,
     )?;
 
-    // 2. Setup Control Pins & Delay
+    // 4. Setup Control Pins & Delay
     let busy = PinDriver::input(peripherals.pins.gpio25, Pull::Floating)?;
     let dc = PinDriver::output(peripherals.pins.gpio27)?;
     let rst = PinDriver::output(peripherals.pins.gpio26)?;
     let mut delay = FreeRtos;
     let mut epd = Epd7in5::new(&mut spi, busy, dc, rst, &mut delay, None)?;
 
-    // 3. Draw image
+    // 5. Draw image
     println!("Drawing image...");
 
     let mut display = Display7in5::default();
     display.clear(Color::White).ok();
 
-    let bmp_data = include_bytes!("../frame.bmp");
-    let bmp = Bmp::<BinaryColor>::from_slice(bmp_data).unwrap();
+    let bmp = Bmp::<BinaryColor>::from_slice(&bmp_data).unwrap();
 
     Image::new(&bmp, Point::zero()).draw(&mut display.color_converted())?;
 
