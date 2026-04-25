@@ -28,7 +28,7 @@ runtime dependencies, so it can run the playwright screenshot pipeline as-is.
 
 ```sh
 docker buildx build \
-  --platform linux/amd64,linux/arm64 \
+  --platform linux/amd64 \
   -t <dockerhub-user>/the-frame-server:latest \
   .
 ```

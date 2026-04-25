@@ -3,7 +3,10 @@ import { chromium, type Browser } from "playwright";
 let browser: Browser;
 
 export async function initBrowser() {
-  browser = await chromium.launch();
+  browser = await chromium.launch({
+    executablePath: process.env.CHROMIUM_PATH ? process.env.CHROMIUM_PATH : undefined,
+    args: ["--no-sandbox"]
+  });
 }
 
 export async function screenshotHtml(html: string): Promise<Buffer> {

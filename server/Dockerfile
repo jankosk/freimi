@@ -1,18 +1,18 @@
-FROM oven/bun:1-debian
-
-WORKDIR /app
+FROM oven/bun:1-alpine
 
 USER root
+WORKDIR /app
+
+RUN apk add --no-cache \
+        chromium \
+        ttf-freefont
+
+# Don't download playwright's bundled chromium — it's glibc-only.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV CHROMIUM_PATH=/usr/bin/chromium
 
 COPY package.json bun.lock ./
-
-# `bun install` triggers the postinstall script that downloads the chromium
-# browser binary via playwright.
-RUN bun install --frozen-lockfile
-
-# Install the OS libraries chromium needs at runtime.
-RUN bunx playwright install-deps chromium && \
-    rm -rf /var/lib/apt/lists/*
+RUN bun install --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src
