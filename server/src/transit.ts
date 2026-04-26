@@ -1,6 +1,13 @@
 const API_URL = "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1";
 const STOP_ID = "HSL:1452602"; // Puotila
 
+const timeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/Helsinki",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 const QUERY = `{
   stop(id: "${STOP_ID}") {
     name
@@ -88,11 +95,9 @@ export async function fetchDepartures(): Promise<StopDepartures> {
   const departures: Departure[] = stop.stoptimesWithoutPatterns.map((s) => {
     const seconds = s.realtime ? s.realtimeDeparture : s.scheduledDeparture;
     const date = new Date((s.serviceDay + seconds) * 1000);
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
     return {
       headsign: s.headsign,
-      time: `${hh}:${mm}`,
+      time: timeFormatter.format(date),
       realtime: s.realtime,
     };
   });
