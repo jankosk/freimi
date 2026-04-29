@@ -15,6 +15,7 @@ import {
 } from "lucide-static";
 import type { StopDepartures, VehicleMode } from "./transit";
 import type { Weather, WeatherIconKey } from "./weather";
+import { timeFormatter } from "./utils";
 
 export interface FrameData {
   transit?: StopDepartures;
@@ -95,7 +96,7 @@ export function renderHtml(data: FrameData): string {
     : "";
 
   const updated = new Date();
-  const updatedTime = `${String(updated.getHours()).padStart(2, "0")}:${String(updated.getMinutes()).padStart(2, "0")}`;
+  const updatedTime = timeFormatter.format(updated);
 
   return `<!DOCTYPE html>
 <html>

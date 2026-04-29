@@ -1,12 +1,7 @@
+import { timeFormatter } from "./utils";
+
 const API_URL = "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1";
 const STOP_ID = "HSL:1452602"; // Puotila
-
-const timeFormatter = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "Europe/Helsinki",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
 
 const QUERY = `{
   stop(id: "${STOP_ID}") {
