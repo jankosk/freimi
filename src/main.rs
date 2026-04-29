@@ -13,10 +13,15 @@ use esp_idf_svc::wifi::{
 };
 use tinybmp::Bmp;
 
+mod display;
+mod frame_diff;
+mod persistence;
+
 const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
 const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
 const FRAME_URL: Option<&str> = option_env!("FRAME_URL");
 const SLEEP_MINUTES: u64 = 30;
+const PARTIAL_BEFORE_FULL: u32 = 3;
 
 fn main() -> ! {
     esp_idf_sys::link_patches();
@@ -36,6 +41,10 @@ fn run() -> anyhow::Result<()> {
         WIFI_PASSWORD.ok_or_else(|| anyhow::anyhow!("WIFI_PASSWORD not set at compile time"))?;
     let frame_url =
         FRAME_URL.ok_or_else(|| anyhow::anyhow!("FRAME_URL not set at compile time"))?;
+
+    let cold_boot = persistence::cold_boot();
+    let partial_count = persistence::partial_count();
+    println!("Boot: cold={cold_boot} partial_count={partial_count}");
 
     let peripherals = Peripherals::take().unwrap();
     let sysloop = EspSystemEventLoop::take()?;
@@ -96,14 +105,55 @@ fn run() -> anyhow::Result<()> {
     let mut delay = FreeRtos;
     let mut epd = Epd7in5::new(&mut spi, busy, dc, rst, &mut delay, None)?;
 
-    // 5. Draw image
-    println!("Drawing image...");
-    let mut display = Display7in5::default();
-    display.clear(Color::White).ok();
-    let bmp = Bmp::<BinaryColor>::from_slice(&bmp_data).unwrap();
-    Image::new(&bmp, Point::zero()).draw(&mut display.color_converted())?;
-    epd.update_and_display_frame(&mut spi, display.buffer(), &mut delay)?;
-    println!("Done!");
+    // 5. Render new BMP into the framebuffer
+    let mut new_display = Display7in5::default();
+    new_display.clear(Color::White).ok();
+    {
+        let bmp = Bmp::<BinaryColor>::from_slice(&bmp_data).unwrap();
+        Image::new(&bmp, Point::zero()).draw(&mut new_display.color_converted())?;
+    }
+    drop(bmp_data);
+    let new_buf = new_display.buffer();
+
+    // 6. Decide full vs partial, then update display + persisted prev frame
+    let mut prev_part = persistence::open_prev_frame()?;
+    let force_full = cold_boot || partial_count >= PARTIAL_BEFORE_FULL;
+
+    let next_count = if force_full {
+        println!("Full refresh");
+        display::render_full(&mut epd, &mut spi, &mut delay, new_buf)?;
+        persistence::write_prev_frame(&mut prev_part, new_buf)?;
+        0
+    } else {
+        let mut prev_buf = vec![0u8; persistence::FRAME_BYTES];
+        persistence::read_prev_frame(&mut prev_part, &mut prev_buf)?;
+        match frame_diff::bbox(&prev_buf, new_buf) {
+            None => {
+                println!("No change; skipping refresh");
+                partial_count
+            }
+            Some(bbox) => {
+                println!(
+                    "Partial refresh: x={} y={} w={} h={}",
+                    bbox.x, bbox.y, bbox.width, bbox.height
+                );
+                let partial = frame_diff::extract(new_buf, &bbox);
+                display::render_partial(
+                    &mut epd,
+                    &mut spi,
+                    &mut delay,
+                    &mut prev_buf,
+                    &partial,
+                    &bbox,
+                )?;
+                persistence::write_prev_frame(&mut prev_part, new_buf)?;
+                partial_count + 1
+            }
+        }
+    };
+
+    persistence::set_partial_count(next_count);
+    println!("Next partial_count = {next_count}");
 
     epd.sleep(&mut spi, &mut delay)?;
     Ok(())
