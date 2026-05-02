@@ -11,12 +11,11 @@ CONFIG_FREERTOS_IDLE_TASK_STACKSIZE=4096
 # `std::thread::Builder::new().stack_size(XXX)` for spawning
 CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=4096
 
-# Custom partition table to add a 64KB partition for the previously-displayed frame
-# Note: ESP-IDF resolves this relative to esp-idf-sys's CMake build dir, not the
-# cargo manifest dir. An absolute path is the simplest way to make it find the file.
-# If you move this checkout, update the path below.
+# Custom partition table to add a 64KB partition for the previously-displayed frame.
 CONFIG_PARTITION_TABLE_CUSTOM=y
-CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="/Users/jankos/code/the-frame/partitions.csv"
+# ESP-IDF resolves this relative to esp-idf-sys's CMake project dir, which lives at
+# target/xtensa-esp32-espidf/<profile>/build/esp-idf-sys-<hash>/out
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="../../../../../../partitions.csv"
 
 # Tell ESP-IDF that the chip has 4MB of flash so the partition table fits.
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
