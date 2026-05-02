@@ -16,6 +16,7 @@ export type WeatherIconKey =
 export interface WeatherSlot {
   hour: string; // "HH"
   temp: number; // rounded, °C
+  wind: number; // rounded, m/s
   description: string;
   iconKey: WeatherIconKey;
 }
@@ -30,6 +31,7 @@ interface OwmListItem {
   dt: number;
   main: { temp: number };
   weather: Array<{ description: string; icon: string }>;
+  wind: { speed: number };
 }
 
 interface OwmResponse {
@@ -70,6 +72,7 @@ function toSlot(item: OwmListItem): WeatherSlot {
   return {
     hour: String(date.getHours()).padStart(2, "0"),
     temp: Math.round(item.main.temp),
+    wind: Math.round(item.wind.speed),
     description: w.description.charAt(0).toUpperCase() + w.description.slice(1),
     iconKey: mapIcon(w.icon),
   };

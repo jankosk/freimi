@@ -12,6 +12,7 @@ import {
   CloudFog,
   Sun,
   Clock,
+  Wind,
 } from "lucide-static";
 import type { StopDepartures, VehicleMode } from "./transit";
 import type { Weather, WeatherIconKey } from "./weather";
@@ -78,6 +79,7 @@ export function renderHtml(data: FrameData): string {
         <div class="weather-info">
           <div class="weather-temp">${data.weather.current.temp}°</div>
           <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>
+          <div class="weather-wind">${icon(Wind, 16)} ${data.weather.current.wind} m/s</div>
         </div>`
     : `<div class="weather-desc">No weather data</div>`;
 
@@ -178,6 +180,13 @@ export function renderHtml(data: FrameData): string {
     font-size: 64px;
     font-weight: 700;
     line-height: 1;
+  }
+  .weather-wind {
+    font-size: 18px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .weather-desc {
     font-size: 18px;
