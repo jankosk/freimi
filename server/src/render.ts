@@ -13,6 +13,10 @@ import {
   Sun,
   Clock,
   Wind,
+  BatteryFull,
+  BatteryMedium,
+  BatteryLow,
+  BatteryWarning,
 } from "lucide-static";
 import type { StopDepartures, VehicleMode } from "./transit";
 import type { Weather, WeatherIconKey } from "./weather";
@@ -21,6 +25,14 @@ import { timeFormatter } from "./utils";
 export interface FrameData {
   transit?: StopDepartures;
   weather?: Weather;
+  battery?: number;
+}
+
+function batteryIcon(level: number): string {
+  if (level >= 0.75) return BatteryFull;
+  if (level >= 0.5) return BatteryMedium;
+  if (level >= 0.2) return BatteryLow;
+  return BatteryWarning;
 }
 
 function vehicleIcon(mode: VehicleMode): string {
@@ -99,6 +111,11 @@ export function renderHtml(data: FrameData): string {
 
   const updated = new Date();
   const updatedTime = timeFormatter.format(updated);
+
+  const battery =
+    typeof data.battery === "number"
+      ? `<span class="battery">${icon(batteryIcon(data.battery), 14)} ${Math.round(data.battery * 100)}%</span>`
+      : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -230,6 +247,11 @@ export function renderHtml(data: FrameData): string {
     font-size: 12px;
     display: flex;
     align-items: center;
+    gap: 8px;
+  }
+  .updated > span {
+    display: inline-flex;
+    align-items: center;
     gap: 4px;
   }
 </style>
@@ -246,7 +268,7 @@ export function renderHtml(data: FrameData): string {
       <div class="forecast">
         ${forecastItems}
       </div>
-      <div class="updated">${icon(Clock, 12)} Updated ${updatedTime}</div>
+      <div class="updated">${battery}<span>${icon(Clock, 12)} Updated ${updatedTime}</span></div>
     </div>
   </div>
 </body>

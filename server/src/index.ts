@@ -19,7 +19,15 @@ const server = Bun.serve({
         fetchDepartures(),
         fetchWeather(),
       ]);
-      const html = renderHtml({ transit, weather });
+
+      const batteryParam = url.searchParams.get("battery");
+      const batteryNum = batteryParam !== null ? Number(batteryParam) : NaN;
+      const battery =
+        Number.isFinite(batteryNum) && batteryNum >= 0 && batteryNum <= 1
+          ? batteryNum
+          : undefined;
+
+      const html = renderHtml({ transit, weather, battery });
 
       if (url.searchParams.get("html") === "true") {
         return new Response(html, {
