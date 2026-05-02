@@ -38,8 +38,32 @@ jobs:
           ldproxy: true
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
+      - name: Cache ESP-IDF and tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.espressif
+            ~/.embuild
+          key: esp-idf-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'sdkconfig.defaults', 'Cargo.lock') }}
+          restore-keys: |
+            esp-idf-${{ runner.os }}-
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
+
+  server-typecheck:
+    name: Server Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        working-directory: server
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Typecheck
+        working-directory: server
+        run: bun run typecheck
 
   server-image:
     name: Server Docker Image

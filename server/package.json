@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
+    "typecheck": "bunx tsc",
     "postinstall": "bunx playwright install chromium"
   },
   "dependencies": {
