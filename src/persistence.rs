@@ -46,7 +46,6 @@ pub fn write_prev_frame(part: &mut EspPartition, buf: &[u8]) -> Result<()> {
     assert_eq!(buf.len(), FRAME_BYTES);
     part.erase(0, ERASE_BYTES)
         .context("erase prev_frame partition")?;
-    part.write(0, buf)
-        .context("write prev_frame partition")?;
+    part.write(0, buf).context("write prev_frame partition")?;
     Ok(())
 }
