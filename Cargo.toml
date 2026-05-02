@@ -26,7 +26,7 @@ embedded-graphics = "0.8.2"
 embedded-hal = "1"
 embedded-svc = "0.29"
 tinybmp = "0.6"
-epd-waveshare = { path = "../epd-waveshare", default-features = false, features = ["graphics"] }
+epd-waveshare = { git = "https://github.com/jankosk/epd-waveshare", default-features = false, features = ["graphics"] }
 
 [build-dependencies]
 embuild = "0.33"
