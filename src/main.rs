@@ -13,6 +13,7 @@ use esp_idf_svc::wifi::{
 };
 use tinybmp::Bmp;
 
+mod battery;
 mod display;
 mod frame_diff;
 mod persistence;
@@ -50,7 +51,16 @@ fn run() -> anyhow::Result<()> {
     let sysloop = EspSystemEventLoop::take()?;
     let nvs = EspDefaultNvsPartition::take()?;
 
-    // 1. Connect to WiFi
+    // 1. Read battery voltage from GPIO34 (ADC1_CH6) via a 1:2 resistor divider.
+    let battery = match battery::read(peripherals.adc1, peripherals.pins.gpio34) {
+        Ok(level) => Some(level),
+        Err(err) => {
+            eprintln!("Battery read failed: {err:?}");
+            None
+        }
+    };
+
+    // 2. Connect to WiFi
     let mut wifi = BlockingWifi::wrap(
         EspWifi::new(peripherals.modem, sysloop.clone(), Some(nvs))?,
         sysloop,
@@ -66,13 +76,20 @@ fn run() -> anyhow::Result<()> {
     wifi.wait_netif_up()?;
     println!("WiFi connected");
 
-    // 2. Fetch BMP over HTTP
-    println!("Fetching {}", frame_url);
+    // 3. Fetch BMP over HTTP
+    let request_url = match battery {
+        Some(level) => {
+            let separator = if frame_url.contains('?') { '&' } else { '?' };
+            format!("{frame_url}{separator}battery={level:.2}")
+        }
+        None => frame_url.to_string(),
+    };
+    println!("Fetching {}", request_url);
     let mut client = Client::wrap(EspHttpConnection::new(&HttpConfiguration {
         buffer_size: Some(4096),
         ..Default::default()
     })?);
-    let mut response = client.get(frame_url)?.submit()?;
+    let mut response = client.get(&request_url)?.submit()?;
 
     let mut bmp_data: Vec<u8> = Vec::with_capacity(64 * 1024);
     let mut buf = [0u8; 1024];
@@ -85,7 +102,7 @@ fn run() -> anyhow::Result<()> {
     }
     println!("Fetched {} bytes", bmp_data.len());
 
-    // 3. Setup SPI
+    // 4. Setup SPI
     let spi_config = config::Config::new().baudrate(4_000_000.into());
     let bus_config = config::DriverConfig::default();
     let mut spi = SpiDeviceDriver::new_single(
@@ -98,14 +115,14 @@ fn run() -> anyhow::Result<()> {
         &spi_config,
     )?;
 
-    // 4. Setup Control Pins & Delay
+    // 5. Setup Control Pins & Delay
     let busy = PinDriver::input(peripherals.pins.gpio25, Pull::Floating)?;
     let dc = PinDriver::output(peripherals.pins.gpio27)?;
     let rst = PinDriver::output(peripherals.pins.gpio26)?;
     let mut delay = FreeRtos;
     let mut epd = Epd7in5::new(&mut spi, busy, dc, rst, &mut delay, None)?;
 
-    // 5. Render new BMP into the framebuffer
+    // 6. Render new BMP into the framebuffer
     let mut new_display = Display7in5::default();
     new_display.clear(Color::White).ok();
     {
@@ -115,7 +132,7 @@ fn run() -> anyhow::Result<()> {
     drop(bmp_data);
     let new_buf = new_display.buffer();
 
-    // 6. Decide full vs partial, then update display + persisted prev frame
+    // 7. Decide full vs partial, then update display + persisted prev frame
     let mut prev_part = persistence::open_prev_frame()?;
     let force_full = cold_boot || partial_count >= PARTIAL_BEFORE_FULL;
 
