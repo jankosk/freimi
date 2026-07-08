@@ -29,7 +29,7 @@ runtime dependencies, so it can run the playwright screenshot pipeline as-is.
 ```sh
 docker buildx build \
   --platform linux/amd64 \
-  -t <dockerhub-user>/the-frame-server:latest \
+  -t the-frame-server:latest \
   .
 ```
 
@@ -39,12 +39,5 @@ docker buildx build \
 docker run --rm -p 3000:3000 \
   -e DIGITRANSIT_SUBSCRIPTION_KEY=... \
   -e OPENWEATHER_API_KEY=... \
-  <dockerhub-user>/the-frame-server:latest
-```
-
-### Push to Docker Hub
-
-```sh
-docker login
-docker push <dockerhub-user>/the-frame-server:latest
+  the-frame-server:latest
 ```
