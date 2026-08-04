@@ -1,4 +1,4 @@
-# the-frame
+# freimi
 
 Battery-powered ESP32 + Waveshare e-paper frame.
 

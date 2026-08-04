@@ -1,4 +1,4 @@
-# the-frame server
+# freimi server
 
 Bun + Playwright service that renders the dashboard HTML, screenshots it, and
 returns a 1-bit BMP at `/frame`.
@@ -29,7 +29,7 @@ runtime dependencies, so it can run the playwright screenshot pipeline as-is.
 ```sh
 docker buildx build \
   --platform linux/amd64 \
-  -t the-frame-server:latest \
+  -t freimi-server:latest \
   .
 ```
 
@@ -39,5 +39,5 @@ docker buildx build \
 docker run --rm -p 3000:3000 \
   -e DIGITRANSIT_SUBSCRIPTION_KEY=... \
   -e OPENWEATHER_API_KEY=... \
-  the-frame-server:latest
+  freimi-server:latest
 ```

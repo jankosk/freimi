@@ -80,13 +80,13 @@ jobs:
             echo "push=true" >> "$GITHUB_OUTPUT"
             {
               echo "tags<<EOF"
-              echo "${{ vars.DOCKERHUB_USERNAME }}/the-frame-server:latest"
-              echo "${{ vars.DOCKERHUB_USERNAME }}/the-frame-server:${{ github.sha }}"
+              echo "${{ vars.DOCKERHUB_USERNAME }}/freimi-server:latest"
+              echo "${{ vars.DOCKERHUB_USERNAME }}/freimi-server:${{ github.sha }}"
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
           else
             echo "push=false" >> "$GITHUB_OUTPUT"
-            echo "tags=the-frame-server:ci" >> "$GITHUB_OUTPUT"
+            echo "tags=freimi-server:ci" >> "$GITHUB_OUTPUT"
           fi
       - name: Log in to Docker Hub
         if: steps.meta.outputs.push == 'true'
