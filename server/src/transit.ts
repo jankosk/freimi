@@ -7,7 +7,7 @@ const QUERY = `{
   stop(id: "${STOP_ID}") {
     name
     vehicleMode
-    stoptimesWithoutPatterns(numberOfDepartures: 8) {
+    stoptimesWithoutPatterns(numberOfDepartures: 9) {
       scheduledArrival
       realtimeArrival
       arrivalDelay
