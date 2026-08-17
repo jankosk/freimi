@@ -1,7 +1,8 @@
 import { timeFormatter } from "./utils";
+import { config } from "./config";
 
 const API_URL = "https://api.digitransit.fi/routing/v2/hsl/gtfs/v1";
-const STOP_ID = "HSL:1452602"; // Puotila
+const STOP_ID = config.stopId;
 
 const QUERY = `{
   stop(id: "${STOP_ID}") {
@@ -63,7 +64,7 @@ export async function fetchDepartures(): Promise<StopDepartures> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const key = process.env.DIGITRANSIT_SUBSCRIPTION_KEY;
+  const key = config.digitransitKey;
   if (key) headers["digitransit-subscription-key"] = key;
 
   const res = await fetch(API_URL, {

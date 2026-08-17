@@ -1,10 +1,11 @@
 import { chromium, type Browser } from "playwright";
+import { config } from "./config";
 
 let browser: Browser;
 
 export async function initBrowser() {
   browser = await chromium.launch({
-    executablePath: process.env.CHROMIUM_PATH ? process.env.CHROMIUM_PATH : undefined,
+    executablePath: config.chromiumPath,
     args: ["--no-sandbox"]
   });
 }

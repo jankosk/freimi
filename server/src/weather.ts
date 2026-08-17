@@ -1,3 +1,5 @@
+import { config } from "./config";
+
 const API_URL = "https://api.openweathermap.org/data/2.5/forecast";
 const [LAT, LON] = ["60.16952", "24.93545"] // Helsinki
 const LANG = 'fi'
@@ -79,7 +81,7 @@ function toSlot(item: OwmListItem): WeatherSlot {
 }
 
 export async function fetchWeather(): Promise<Weather> {
-  const key = process.env.OPENWEATHER_API_KEY;
+  const key = config.openWeatherKey;
   if (!key) {
     throw new Error("OPENWEATHER_API_KEY is not set");
   }

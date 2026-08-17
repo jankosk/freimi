@@ -3,14 +3,13 @@ import { initBrowser, screenshotHtml, closeBrowser } from "./screenshot";
 import { convertToBmp } from "./convert";
 import { fetchDepartures } from "./transit";
 import { fetchWeather } from "./weather";
-
-const PORT = Number(process.env.PORT) || 3000;
+import { config } from "./config";
 
 await initBrowser();
 console.log("Browser ready");
 
 const server = Bun.serve({
-  port: PORT,
+  port: config.port,
   async fetch(req) {
     const url = new URL(req.url);
 
