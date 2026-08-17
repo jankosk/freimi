@@ -96,9 +96,16 @@ export async function fetchWeather(): Promise<Weather> {
     throw new Error(`OpenWeatherMap: empty forecast list`);
   }
 
+  const now = Date.now() / 1000;
+  const currentIndex = json.list.reduce(
+    (best, item, i) =>
+      Math.abs(item.dt - now) < Math.abs(json.list[best].dt - now) ? i : best,
+    0
+  );
+
   return {
     city: json.city.name,
-    current: toSlot(json.list[0]),
-    forecast: json.list.slice(1, 5).map(toSlot),
+    current: toSlot(json.list[currentIndex]),
+    forecast: json.list.slice(currentIndex + 1, currentIndex + 5).map(toSlot),
   };
 }
