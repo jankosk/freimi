@@ -1,8 +1,8 @@
 # freimi
 
-Battery-powered ESP32 + Waveshare e-paper frame.
+Battery-powered ESP32 + Waveshare e-paper frame for displaying local weather and transit information.
 
-The firmware wakes up, reads battery voltage, fetches a 1-bit BMP from the server, updates the display (full or partial refresh), then goes back to deep sleep.
+The firmware wakes up, reads battery voltage, fetches a 1-bit BMP from the server, updates the display (full or partial refresh), then goes back to deep sleep and schedules next wake up.
 
 ## Overview
 
