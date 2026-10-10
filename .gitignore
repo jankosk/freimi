@@ -1,5 +1,6 @@
 /.vscode
 /.embuild
+/.venv
 /target
 /Cargo.lock
 /server/node_modules

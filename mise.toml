@@ -1,0 +1,22 @@
+[tools]
+python = "3.12"
+
+[env]
+# ESP-IDF's build system shells out to `python3` for its venv/tooling.
+# Use the mise-managed interpreter, which includes ensurepip.
+_.python.venv = { path = ".venv", create = true }
+# Rust is managed by rustup (the `esp` Xtensa toolchain, selected via
+# rust-toolchain.toml), not mise. Put rustup's bin dir on PATH so `cargo`/`rustup`
+# are available without mise overriding RUSTUP_TOOLCHAIN.
+_.path = ["{{ env.HOME }}/.cargo/bin"]
+# Load the environment espup generates after `espup install` (LIBCLANG_PATH +
+# Xtensa GCC on PATH). Missing file is ignored, so this is safe on a fresh
+# checkout before espup has run. Run `mise run setup` to bootstrap.
+_.source = "{{ env.HOME }}/export-esp.sh"
+
+[tasks.setup]
+description = "Install the Espressif Rust toolchain and its linker proxy"
+run = """
+espup install
+cargo install ldproxy
+"""

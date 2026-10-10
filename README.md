@@ -71,13 +71,51 @@ This project has two main components:
 
 ## Setup
 
-- Install [espup](https://github.com/esp-rs/espup)
-- Install [espflash](https://github.com/esp-rs/espflash#installation)
-- Build project
+[mise](https://mise.jdx.dev/) manages the Python toolchain and ESP-IDF's build
+environment (see `mise.toml`). Rust is managed by `rustup` via the `esp` Xtensa
+toolchain selected by `rust-toolchain.toml`.
+
+### Prerequisites
+
+Install once, system-wide:
+
+1. [rustup](https://rustup.rs/) — provides `cargo` and `rustup`
+2. [mise](https://mise.jdx.dev/getting-started.html) — manages Python and the build environment
+3. [espflash](https://github.com/esp-rs/espflash#installation) — flashing tool:
+   ```sh
+   cargo install espflash
+   ```
+4. [espup](https://github.com/esp-rs/espup) — installs the Espressif Rust toolchain and Xtensa GCC:
+   ```sh
+   cargo install espup
+   ```
+
+### Bootstrap and build
+
+Install the Python toolchain and create the local virtualenv:
+
+```sh
+mise trust
+mise install
+```
+
+Install the Espressif Rust toolchain and its linker proxy (one-time, downloads
+several GB):
+
+```sh
+mise run setup
+```
+
+Then build (mise auto-activates on shell entry and loads the generated ESP
+environment):
 
 ```sh
 cargo build
 ```
+
+> On the first build, ESP-IDF is downloaded and compiled, which takes a while.
+> The `espup install` step writes `~/export-esp.sh`; `mise.toml` sources it
+> automatically, so no manual `source` is needed.
 
 ## Flash firmware
 
@@ -87,6 +125,6 @@ Set them before flashing:
 ```sh
 WIFI_SSID="your-wifi-name" \
 WIFI_PASSWORD="your-wifi-password" \
-FRAME_URL="http://<server-ip>:3000/frame"
+FRAME_URL="http://<server-host>:3000/frame" \
 cargo run --release
 ```
