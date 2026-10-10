@@ -89,7 +89,7 @@ export function renderHtml(data: FrameData): string {
     : `<div class="transit-row"><span class="label">No departures</span></div>`;
 
   const weatherCurrent = data.weather
-    ? `<div class="weather-icon">${smartSymbolIcon(data.weather.current.symbol, 96)}</div>
+    ? `<div class="weather-icon">${smartSymbolIcon(data.weather.current.symbol, 112)}</div>
         <div class="weather-info">
           <div class="weather-temp">${data.weather.current.temp}°</div>
           <div class="weather-wind">${icon(Wind, 16)} ${data.weather.current.wind} m/s</div>
@@ -101,7 +101,7 @@ export function renderHtml(data: FrameData): string {
     ? data.weather.forecast
         .map(
           (f) => `<div class="forecast-item">
-          <div class="forecast-icon">${smartSymbolIcon(f.symbol, 44)}</div>
+          <div class="forecast-icon">${smartSymbolIcon(f.symbol, 52)}</div>
           <div class="forecast-info">
             <div class="forecast-time">${f.hour}</div>
             <div class="forecast-temp">${f.temp}°</div>
