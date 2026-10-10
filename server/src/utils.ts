@@ -11,3 +11,10 @@ export const hourFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   hour12: false,
 });
+
+export const dayFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Helsinki",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});

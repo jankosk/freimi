@@ -6,6 +6,8 @@ import {
   Clock,
   Wind,
   UserRound,
+  Sunrise,
+  Sunset,
   BatteryFull,
   BatteryMedium,
   BatteryLow,
@@ -107,6 +109,13 @@ export function renderHtml(data: FrameData): string {
         </div>`,
         )
         .join("\n        ")
+    : "";
+
+  const weatherSun = data.weather
+    ? `<div class="weather-sun">
+        <span>${icon(Sunrise, 16)} ${data.weather.sunrise}</span>
+        <span>${icon(Sunset, 16)} ${data.weather.sunset}</span>
+      </div>`
     : "";
 
   const updated = new Date();
@@ -248,6 +257,18 @@ export function renderHtml(data: FrameData): string {
   .forecast-temp {
     font-size: 20px;
   }
+  .weather-sun {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 14px;
+    margin-top: 20px;
+  }
+  .weather-sun > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
   .updated {
     margin-top: auto;
     align-self: flex-end;
@@ -275,6 +296,7 @@ export function renderHtml(data: FrameData): string {
       <div class="forecast">
         ${forecastItems}
       </div>
+      ${weatherSun}
       <div class="updated">${battery}<span>${icon(Clock, 12)} Updated ${updatedTime}</span></div>
     </div>
   </div>

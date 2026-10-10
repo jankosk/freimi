@@ -1,8 +1,8 @@
-import { hourFormatter } from "./utils";
+import { dayFormatter, hourFormatter, timeFormatter } from "./utils";
 
 const API_URL = "https://opendata.fmi.fi/timeseries";
 const [LAT, LON] = ["60.16952", "24.93545"]; // Helsinki
-const PARAMS = "time,temperature,feelslike,smartsymbol,windSpeedMS";
+const PARAMS = "time,temperature,feelslike,smartsymbol,windSpeedMS,sunrise,sunset";
 const FORECAST_INDEXES = [3, 6, 9, 12]; // every 3h, 12h ahead
 
 export interface WeatherSlot {
@@ -16,6 +16,8 @@ export interface WeatherSlot {
 export interface Weather {
   current: WeatherSlot;
   forecast: WeatherSlot[];
+  sunrise: string; // "HH:MM" in Helsinki time, today
+  sunset: string; // "HH:MM" in Helsinki time, today
 }
 
 interface FmiRow {
@@ -24,6 +26,8 @@ interface FmiRow {
   feelslike: number;
   smartsymbol: number;
   windSpeedMS: number;
+  sunrise: string; // "YYYYMMDDTHHMMSS" (UTC), per calendar day
+  sunset: string; // "YYYYMMDDTHHMMSS" (UTC), per calendar day
 }
 
 function parseUtcTime(s: string): Date {
@@ -63,8 +67,13 @@ export async function fetchWeather(): Promise<Weather> {
     throw new Error("FMI: not enough forecast rows");
   }
 
+  const today = dayFormatter.format(new Date());
+  const todayRow = rows.find((r) => dayFormatter.format(parseUtcTime(r.time)) === today) ?? rows[0];
+
   return {
     current: toSlot(rows[0]),
     forecast: FORECAST_INDEXES.map((i) => toSlot(rows[i])),
+    sunrise: timeFormatter.format(parseUtcTime(todayRow.sunrise)),
+    sunset: timeFormatter.format(parseUtcTime(todayRow.sunset)),
   };
 }
