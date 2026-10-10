@@ -46,7 +46,9 @@ function toSlot(row: FmiRow): WeatherSlot {
 }
 
 export async function fetchWeather(): Promise<Weather> {
-  const endtime = new Date(Date.now() + 16 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
+  const now = new Date();
+  const starttime = new Date(now.getTime() - 2 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
+  const endtime = new Date(now.getTime() + 16 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
   const params = new URLSearchParams({
     latlon: `${LAT},${LON}`,
     param: PARAMS,
@@ -54,6 +56,7 @@ export async function fetchWeather(): Promise<Weather> {
     timestep: "60",
     tz: "UTC",
     lang: "fi",
+    starttime,
     endtime,
   });
 
@@ -63,16 +66,31 @@ export async function fetchWeather(): Promise<Weather> {
   }
 
   const rows = (await res.json()) as FmiRow[];
-  if (!Array.isArray(rows) || rows.length <= Math.max(...FORECAST_INDEXES)) {
+  if (!Array.isArray(rows)) {
+    throw new Error("FMI: unexpected response");
+  }
+
+  const nowMs = now.getTime();
+  let currentIndex = 0;
+  let closest = Infinity;
+  for (let i = 0; i < rows.length; i++) {
+    const diff = Math.abs(parseUtcTime(rows[i].time).getTime() - nowMs);
+    if (diff < closest) {
+      closest = diff;
+      currentIndex = i;
+    }
+  }
+
+  if (rows.length <= currentIndex + Math.max(...FORECAST_INDEXES)) {
     throw new Error("FMI: not enough forecast rows");
   }
 
-  const today = dayFormatter.format(new Date());
+  const today = dayFormatter.format(now);
   const todayRow = rows.find((r) => dayFormatter.format(parseUtcTime(r.time)) === today) ?? rows[0];
 
   return {
-    current: toSlot(rows[0]),
-    forecast: FORECAST_INDEXES.map((i) => toSlot(rows[i])),
+    current: toSlot(rows[currentIndex]),
+    forecast: FORECAST_INDEXES.map((i) => toSlot(rows[currentIndex + i])),
     sunrise: timeFormatter.format(parseUtcTime(todayRow.sunrise)),
     sunset: timeFormatter.format(parseUtcTime(todayRow.sunset)),
   };
