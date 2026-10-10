@@ -3,14 +3,6 @@ import {
   TrainFrontTunnel,
   TrainFront,
   Bus,
-  Cloud,
-  CloudRain,
-  CloudSnow,
-  CloudSun,
-  CloudDrizzle,
-  CloudLightning,
-  CloudFog,
-  Sun,
   Clock,
   Wind,
   BatteryFull,
@@ -18,8 +10,10 @@ import {
   BatteryLow,
   BatteryWarning,
 } from "lucide-static";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { StopDepartures, VehicleMode } from "./transit";
-import type { Weather, WeatherIconKey } from "./weather";
+import type { Weather } from "./weather";
 import { timeFormatter } from "./utils";
 
 export interface FrameData {
@@ -62,16 +56,21 @@ function icon(svg: string, size = 20): string {
     .replace(/stroke-width="\d+"/, `stroke-width="2.5"`);
 }
 
-const weatherIcons: Record<WeatherIconKey, string> = {
-  sun: Sun,
-  cloud: Cloud,
-  cloudSun: CloudSun,
-  cloudRain: CloudRain,
-  cloudDrizzle: CloudDrizzle,
-  cloudSnow: CloudSnow,
-  cloudLightning: CloudLightning,
-  cloudFog: CloudFog,
-};
+const symbolDir = join(import.meta.dir, "..", "assets", "smartsymbol");
+const symbolCache = new Map<number, string>();
+
+function smartSymbolIcon(code: number, size = 20): string {
+  let svg = symbolCache.get(code);
+  if (svg === undefined) {
+    try {
+      svg = readFileSync(join(symbolDir, `${code}.svg`), "utf8");
+    } catch {
+      svg = readFileSync(join(symbolDir, "7.svg"), "utf8");
+    }
+    symbolCache.set(code, svg);
+  }
+  return icon(svg, size);
+}
 
 export function renderHtml(data: FrameData): string {
   const transitRows = data.transit
@@ -87,7 +86,7 @@ export function renderHtml(data: FrameData): string {
     : `<div class="transit-row"><span class="label">No departures</span></div>`;
 
   const weatherCurrent = data.weather
-    ? `<div class="weather-icon">${icon(weatherIcons[data.weather.current.iconKey], 96)}</div>
+    ? `<div class="weather-icon">${smartSymbolIcon(data.weather.current.symbol, 96)}</div>
         <div class="weather-info">
           <div class="weather-temp">${data.weather.current.temp}°</div>
           <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>
@@ -99,7 +98,7 @@ export function renderHtml(data: FrameData): string {
     ? data.weather.forecast
         .map(
           (f) => `<div class="forecast-item">
-          <div class="forecast-icon">${icon(weatherIcons[f.iconKey], 44)}</div>
+          <div class="forecast-icon">${smartSymbolIcon(f.symbol, 44)}</div>
           <div class="forecast-info">
             <div class="forecast-time">${f.hour}</div>
             <div class="forecast-temp">${f.temp}°</div>

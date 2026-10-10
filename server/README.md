@@ -6,7 +6,6 @@ returns a 1-bit BMP at `/frame`.
 ## Required environment variables
 
 - `DIGITRANSIT_SUBSCRIPTION_KEY` — HSL Digitransit API key
-- `OPENWEATHER_API_KEY` — OpenWeather API key
 - `PORT` (optional, defaults to `3000`)
 
 ## Local development
@@ -38,6 +37,5 @@ docker buildx build \
 ```sh
 docker run --rm -p 3000:3000 \
   -e DIGITRANSIT_SUBSCRIPTION_KEY=... \
-  -e OPENWEATHER_API_KEY=... \
   freimi-server:latest
 ```

@@ -16,6 +16,7 @@ RUN bun install --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY assets ./assets
 
 ENV PORT=3000
 EXPOSE 3000

@@ -1,113 +1,71 @@
-import { config } from "./config";
+import { hourFormatter } from "./utils";
 
-const API_URL = "https://api.openweathermap.org/data/2.5/forecast";
-const [LAT, LON] = ["60.16952", "24.93545"] // Helsinki
-const LANG = 'fi'
-const UNITS = "metric";
-
-export type WeatherIconKey =
-  | "sun"
-  | "cloud"
-  | "cloudSun"
-  | "cloudRain"
-  | "cloudDrizzle"
-  | "cloudSnow"
-  | "cloudLightning"
-  | "cloudFog";
+const API_URL = "https://opendata.fmi.fi/timeseries";
+const [LAT, LON] = ["60.16952", "24.93545"]; // Helsinki
+const PARAMS = "time,temperature,smartsymbol,smartsymboltext,windSpeedMS";
+const FORECAST_INDEXES = [3, 6, 9, 12]; // every 3h, 12h ahead
 
 export interface WeatherSlot {
-  hour: string; // "HH"
+  hour: string; // "HH" in Helsinki time
   temp: number; // rounded, °C
   wind: number; // rounded, m/s
   description: string;
-  iconKey: WeatherIconKey;
+  symbol: number; // FMI smartSymbol code
 }
 
 export interface Weather {
-  city: string;
   current: WeatherSlot;
-  forecast: WeatherSlot[]; // next 4 slots, 3h apart
+  forecast: WeatherSlot[];
 }
 
-interface OwmListItem {
-  dt: number;
-  main: { temp: number };
-  weather: Array<{ description: string; icon: string }>;
-  wind: { speed: number };
+interface FmiRow {
+  time: string; // "YYYYMMDDTHHMMSS" (UTC)
+  temperature: number;
+  smartsymbol: number;
+  smartsymboltext: string;
+  windSpeedMS: number;
 }
 
-interface OwmResponse {
-  list: OwmListItem[];
-  city: { name: string };
-  cod?: string;
-  message?: string;
+function parseUtcTime(s: string): Date {
+  const iso = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T${s.slice(9, 11)}:${s.slice(11, 13)}:${s.slice(13, 15)}Z`;
+  return new Date(iso);
 }
 
-function mapIcon(owmIcon: string): WeatherIconKey {
-  const code = owmIcon.substring(0, 2);
-  switch (code) {
-    case "01":
-      return "sun";
-    case "02":
-    case "03":
-      return "cloudSun";
-    case "04":
-      return "cloud";
-    case "09":
-      return "cloudDrizzle";
-    case "10":
-      return "cloudRain";
-    case "11":
-      return "cloudLightning";
-    case "13":
-      return "cloudSnow";
-    case "50":
-      return "cloudFog";
-    default:
-      return "cloud";
-  }
-}
-
-function toSlot(item: OwmListItem): WeatherSlot {
-  const date = new Date(item.dt * 1000);
-  const w = item.weather[0];
+function toSlot(row: FmiRow): WeatherSlot {
+  const text = row.smartsymboltext;
   return {
-    hour: String(date.getHours()).padStart(2, "0"),
-    temp: Math.round(item.main.temp),
-    wind: Math.round(item.wind.speed),
-    description: w.description.charAt(0).toUpperCase() + w.description.slice(1),
-    iconKey: mapIcon(w.icon),
+    hour: hourFormatter.format(parseUtcTime(row.time)),
+    temp: Math.round(row.temperature),
+    wind: Math.round(row.windSpeedMS),
+    description: text.charAt(0).toUpperCase() + text.slice(1),
+    symbol: Number(row.smartsymbol),
   };
 }
 
 export async function fetchWeather(): Promise<Weather> {
-  const key = config.openWeatherKey;
-  if (!key) {
-    throw new Error("OPENWEATHER_API_KEY is not set");
-  }
+  const endtime = new Date(Date.now() + 16 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, "Z");
+  const params = new URLSearchParams({
+    latlon: `${LAT},${LON}`,
+    param: PARAMS,
+    format: "json",
+    timestep: "60",
+    tz: "UTC",
+    lang: "fi",
+    endtime,
+  });
 
-  const params = new URLSearchParams({ lat: LAT, lon: LON, lang: LANG, units: UNITS, appid: key });
   const res = await fetch(`${API_URL}?${params}`);
-
   if (!res.ok) {
-    throw new Error(`OpenWeatherMap error: ${res.status} ${res.statusText}`);
+    throw new Error(`FMI error: ${res.status} ${res.statusText}`);
   }
 
-  const json = (await res.json()) as OwmResponse;
-  if (!json.list?.length) {
-    throw new Error(`OpenWeatherMap: empty forecast list`);
+  const rows = (await res.json()) as FmiRow[];
+  if (!Array.isArray(rows) || rows.length <= Math.max(...FORECAST_INDEXES)) {
+    throw new Error("FMI: not enough forecast rows");
   }
-
-  const now = Date.now() / 1000;
-  const currentIndex = json.list.reduce(
-    (best, item, i) =>
-      Math.abs(item.dt - now) < Math.abs(json.list[best].dt - now) ? i : best,
-    0
-  );
 
   return {
-    city: json.city.name,
-    current: toSlot(json.list[currentIndex]),
-    forecast: json.list.slice(currentIndex + 1, currentIndex + 5).map(toSlot),
+    current: toSlot(rows[0]),
+    forecast: FORECAST_INDEXES.map((i) => toSlot(rows[i])),
   };
 }
