@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "lucide-static": "1.8.0",
-    "playwright": "1.52.0",
+    "playwright": "1.63.0",
     "sharp": "0.34.1"
   },
   "devDependencies": {
