@@ -5,6 +5,7 @@ import {
   Bus,
   Clock,
   Wind,
+  UserRound,
   BatteryFull,
   BatteryMedium,
   BatteryLow,
@@ -89,8 +90,8 @@ export function renderHtml(data: FrameData): string {
     ? `<div class="weather-icon">${smartSymbolIcon(data.weather.current.symbol, 96)}</div>
         <div class="weather-info">
           <div class="weather-temp">${data.weather.current.temp}°</div>
-          <div class="weather-desc">${escapeHtml(data.weather.current.description)}</div>
           <div class="weather-wind">${icon(Wind, 16)} ${data.weather.current.wind} m/s</div>
+          <div class="weather-feels">${icon(UserRound, 16)} ${data.weather.current.feelsLike}°</div>
         </div>`
     : `<div class="weather-desc">No weather data</div>`;
 
@@ -198,6 +199,13 @@ export function renderHtml(data: FrameData): string {
     line-height: 1;
   }
   .weather-wind {
+    font-size: 18px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .weather-feels {
     font-size: 18px;
     margin-top: 4px;
     display: flex;

@@ -2,14 +2,14 @@ import { hourFormatter } from "./utils";
 
 const API_URL = "https://opendata.fmi.fi/timeseries";
 const [LAT, LON] = ["60.16952", "24.93545"]; // Helsinki
-const PARAMS = "time,temperature,smartsymbol,smartsymboltext,windSpeedMS";
+const PARAMS = "time,temperature,feelslike,smartsymbol,windSpeedMS";
 const FORECAST_INDEXES = [3, 6, 9, 12]; // every 3h, 12h ahead
 
 export interface WeatherSlot {
   hour: string; // "HH" in Helsinki time
   temp: number; // rounded, °C
+  feelsLike: number; // rounded, °C
   wind: number; // rounded, m/s
-  description: string;
   symbol: number; // FMI smartSymbol code
 }
 
@@ -21,8 +21,8 @@ export interface Weather {
 interface FmiRow {
   time: string; // "YYYYMMDDTHHMMSS" (UTC)
   temperature: number;
+  feelslike: number;
   smartsymbol: number;
-  smartsymboltext: string;
   windSpeedMS: number;
 }
 
@@ -32,12 +32,11 @@ function parseUtcTime(s: string): Date {
 }
 
 function toSlot(row: FmiRow): WeatherSlot {
-  const text = row.smartsymboltext;
   return {
     hour: hourFormatter.format(parseUtcTime(row.time)),
     temp: Math.round(row.temperature),
+    feelsLike: Math.round(row.feelslike),
     wind: Math.round(row.windSpeedMS),
-    description: text.charAt(0).toUpperCase() + text.slice(1),
     symbol: Number(row.smartsymbol),
   };
 }
