@@ -78,14 +78,14 @@ function smartSymbolIcon(code: number, size = 20): string {
 export function renderHtml(data: FrameData): string {
   const transitRows = data.transit
     ? data.transit.departures
-        .map((d) => {
-          const iconSvg = vehicleIcon(data.transit!.vehicleMode);
-          return `<div class="transit-row">
+      .map((d) => {
+        const iconSvg = vehicleIcon(data.transit!.vehicleMode);
+        return `<div class="transit-row">
             <span class="label">${icon(iconSvg)} ${escapeHtml(d.headsign)}</span>
             <span class="time">${d.time}</span>
           </div>`;
-        })
-        .join("\n      ")
+      })
+      .join("\n      ")
     : `<div class="transit-row"><span class="label">No departures</span></div>`;
 
   const weatherCurrent = data.weather
@@ -99,16 +99,16 @@ export function renderHtml(data: FrameData): string {
 
   const forecastItems = data.weather
     ? data.weather.forecast
-        .map(
-          (f) => `<div class="forecast-item">
+      .map(
+        (f) => `<div class="forecast-item">
           <div class="forecast-icon">${smartSymbolIcon(f.symbol, 52)}</div>
           <div class="forecast-info">
             <div class="forecast-time">${f.hour}</div>
             <div class="forecast-temp">${f.temp}°</div>
           </div>
         </div>`,
-        )
-        .join("\n        ")
+      )
+      .join("\n        ")
     : "";
 
   const weatherSun = data.weather
@@ -252,10 +252,10 @@ export function renderHtml(data: FrameData): string {
   }
   .forecast-time {
     font-size: 16px;
-    font-weight: 700;
   }
   .forecast-temp {
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 700;
   }
   .weather-sun {
     display: flex;
