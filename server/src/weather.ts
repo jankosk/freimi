@@ -3,7 +3,7 @@ import { dayFormatter, hourFormatter, timeFormatter } from "./utils";
 const API_URL = "https://opendata.fmi.fi/timeseries";
 const [LAT, LON] = ["60.16952", "24.93545"]; // Helsinki
 const PARAMS = "time,temperature,feelslike,smartsymbol,windSpeedMS,sunrise,sunset";
-const FORECAST_INDEXES = [3, 6, 9, 12]; // every 3h, 12h ahead
+const FORECAST_INDEXES = [2, 4, 6, 8]; // every 2h, 8h ahead
 
 export interface WeatherSlot {
   hour: string; // "HH" in Helsinki time
