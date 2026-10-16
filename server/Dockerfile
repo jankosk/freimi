@@ -1,6 +1,5 @@
 FROM oven/bun:1-alpine
 
-USER root
 WORKDIR /app
 
 RUN apk add --no-cache \
@@ -17,6 +16,9 @@ RUN bun install --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
 COPY assets ./assets
+
+RUN chown -R bun:bun /app
+USER bun
 
 ENV PORT=3000
 EXPOSE 3000
