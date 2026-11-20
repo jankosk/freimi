@@ -71,51 +71,40 @@ This project has two main components:
 
 ## Setup
 
-[mise](https://mise.jdx.dev/) manages the Python toolchain and ESP-IDF's build
-environment (see `mise.toml`). Rust is managed by `rustup` via the `esp` Xtensa
-toolchain selected by `rust-toolchain.toml`.
+Build tasks live in the `justfile`. Python is used only by ESP-IDF's own
+tooling, which creates and manages its own virtualenv under `.embuild`. Rust is
+managed by `rustup` via the `esp` Xtensa toolchain selected by
+`rust-toolchain.toml`.
 
 ### Prerequisites
 
 Install once, system-wide:
 
 1. [rustup](https://rustup.rs/) — provides `cargo` and `rustup`
-2. [mise](https://mise.jdx.dev/getting-started.html) — manages Python and the build environment
-3. [espflash](https://github.com/esp-rs/espflash#installation) — flashing tool:
-   ```sh
-   cargo install espflash
-   ```
-4. [espup](https://github.com/esp-rs/espup) — installs the Espressif Rust toolchain and Xtensa GCC:
-   ```sh
-   cargo install espup
-   ```
+2. [just](https://github.com/casey/just#installation) — task runner
+3. Python **3.9–3.13** available as `python3` on `PATH`. ESP-IDF shells out to
+   `python3` and creates its own virtualenv from it, so the interpreter needs
+   `venv`/`ensurepip` support.
+
+`espup`, `espflash`, and `ldproxy` are installed by `just setup` if missing.
 
 ### Bootstrap and build
-
-Install the Python toolchain and create the local virtualenv:
-
-```sh
-mise trust
-mise install
-```
 
 Install the Espressif Rust toolchain and its linker proxy (one-time, downloads
 several GB):
 
 ```sh
-mise run setup
+just setup
 ```
 
-Then build (mise auto-activates on shell entry and loads the generated ESP
-environment):
+Then build (the recipes source the generated ESP environment):
 
 ```sh
-cargo build
+just build
 ```
 
 > On the first build, ESP-IDF is downloaded and compiled, which takes a while.
-> The `espup install` step writes `~/export-esp.sh`; `mise.toml` sources it
-> automatically, so no manual `source` is needed.
+> The `espup install` step writes `~/export-esp.sh`, which is sourced by `just` automatically.
 
 ## Flash firmware
 
@@ -126,5 +115,5 @@ Set them before flashing:
 WIFI_SSID="your-wifi-name" \
 WIFI_PASSWORD="your-wifi-password" \
 FRAME_URL="http://<server-host>:3000/frame" \
-cargo run --release
+just run
 ```
